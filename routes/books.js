@@ -51,9 +51,9 @@ const navBar = `
   <nav>
     <ul>
       <li><a href="/">Home</a></li>
-      <li><a href="/my-books">View your books!</a></li>
+      <li><a href="/books">View our selection!</a></li>
+      <li><a href="/my-books">View your collection!</a></li>
       <li><a href="/donate">Donate a book!</a></li>
-      <li><a href="/our-story">Our story</a></li>
     </ul>
   </nav>`;
 
@@ -62,8 +62,9 @@ const booksHead = `
   <link rel="stylesheet" href="/stylesheets/style.css" />
   <script defer src="/javascripts/activatebtns.js"></script>`;
 
-/* GET books listing. */
-router.get("/", function (req, res) {
+/* GET /books */
+/* Displays all books in the books array*/
+router.get("/books", function (req, res) {
   let booksDiv =
     booksHead +
     navBar +
@@ -74,22 +75,22 @@ router.get("/", function (req, res) {
     booksDiv += `
         <div class="book-div">
           <h2>${book.title}</h2>
-        `;
-
+    `;
+    booksDiv += `<a href="/books/${urlify(
+      book.title
+    )}" class="book-about">About this book...</a>`;
     book.stocked
-      ? (booksDiv += `<form action="/books/${urlify(
+      ? (booksDiv += `<a href="/books/borrow/${urlify(
           book.title
-        )}" method="post"><input type="submit" name="${
-          this.parentNode
-        }" value="About this book"></form></div>`)
+        )}" class="book-stocked">Borrow this book</a></div>`)
       : (booksDiv += `<button disabled>Unavailable</button></div>`);
   }
-
   booksDiv += "</div>";
-
   res.send(booksDiv);
 });
 
+/* GET /donate */
+/* Displays form for adding a book to books array */
 router.get("/donate", (req, res) => {
   let bookRequestForm =
     booksHead +
@@ -109,8 +110,12 @@ router.get("/donate", (req, res) => {
   res.send(bookRequestForm);
 });
 
+/* POST /donate */
+/* Adds a new book to the books array */
+/* Redirects to /books after */
 router.post("/donate", (req, res) => {
   console.log("req.body");
+  console.log(req.body);
 
   const newBook = {
     title: req.body.title,
@@ -119,11 +124,13 @@ router.post("/donate", (req, res) => {
     stocked: true,
   };
 
-  books.push(newBook);
+  books.unshift(newBook);
 
-  res.redirect("/");
+  res.redirect("/books");
 });
 
+/* GET /my-books */
+/* Shows all books you have currently borrowed from the library */
 router.get("/my-books", (req, res) => {
   let myBooksPage = booksHead + navBar;
 
@@ -148,13 +155,33 @@ router.get("/my-books", (req, res) => {
 
     myBooksPage += "</ul></div>";
   }
-
   res.send(myBooksPage);
 });
 
+/* GET /books/clickedbook */
+/* Shows additional info about a particular book */
+router.get("/books/:clickedBook", (req, res) => {
+  const clickedBook = req.params.clickedBook;
+  console.log("clickedBook: ", clickedBook);
+  console.log("typeof clickedBook: ", typeof clickedBook);
+
+  let bookObj = books.find((book) => urlify(book.title) == clickedBook);
+  console.log(bookObj);
+
+  let bookDesc = booksHead + navBar;
+  bookDesc += `
+    <div class="book-div">
+      <h2>${bookObj.title}</h2>
+      <h3>Written by:<br />${bookObj.author}</h3>
+      <p class="pages">${bookObj.pages}</p>
+    </div>`;
+
+  res.send(bookDesc);
+});
+/* 
 router.post("/books/:clickedBook", (req, res) => {
-  console.log(req.body);
-  console.log(req.body.name);
+  console.log("req.params");
+  console.log(req.params);
 
   let bookDesc = booksHead + navBar;
 
@@ -166,7 +193,7 @@ router.post("/books/:clickedBook", (req, res) => {
     </div>`;
 
   res.send(bookDesc);
-});
+}); */
 
 // Helper function
 // Converts title of book to a url acceptable route
