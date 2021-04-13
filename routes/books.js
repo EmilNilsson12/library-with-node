@@ -124,7 +124,6 @@ router.get("/my-books", (req, res) => {
 
 /* POST /books/return/:clickedBook */
 /* Removes the clicked book from myBooks */
-/* Redirects to /books after */
 router.post("/books/return/:clickedBook", (req, res) => {
   const clickedBook = req.body.title;
 
@@ -146,15 +145,8 @@ router.post("/books/return/:clickedBook", (req, res) => {
   // Change property 'stocked' in books array
   books[bookIndexLibrary].stocked = true;
 
-  // Style page
-  let page = booksHead;
-  page += `
-    <p>${clickedBook} has been returned to the library!</p>
-    <p><a href="/books">Back to the library --></a></p>
-    <p><a href="/my-books">See your collection --></a></p>`;
-
-  // Show all books currently borrowed by user
-  res.send(page);
+  // Reload page
+  res.redirect("/my-books");
 });
 
 /* GET /donate */
@@ -232,7 +224,6 @@ router.get("/books/:clickedBook", (req, res) => {
 
 /* POST /books/borrow/:clickedBook */
 /* Adds the clicked book to myBooks */
-/* Page only contains a confimation and links to the library and your collection*/
 router.post("/books/borrow/:clickedBook", (req, res) => {
   const clickedBook = req.body.title;
 
@@ -246,15 +237,8 @@ router.post("/books/borrow/:clickedBook", (req, res) => {
   // Change property 'stocked' in books array
   books[bookIndex].stocked = false;
 
-  // Style page
-  let page = booksHead;
-  page += `
-    <p>${clickedBook} has been added to your account!</p>
-    <p><a href="/books">Back to the library --></a></p>
-    <p><a href="/my-books">See your collection --></a></p>`;
-
-  // Show a page confirming that the book has been borrowed
-  res.send(page);
+  // Reload page
+  res.redirect("/books");
 });
 
 // Helper function
