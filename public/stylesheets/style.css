@@ -63,8 +63,9 @@ ul {
   position: relative;
 }
 
-.book-div button,
-.book-div a {
+.book-div a,
+.book-div form,
+.book-div button {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -90,6 +91,7 @@ ul {
 }
 
 .book-div a.book-stocked,
+.book-div form,
 .book-div button {
   bottom: 0;
   color: black;

@@ -1,12 +1,15 @@
 var express = require("express");
 var router = express.Router();
 
+var cors = require("cors");
+router.use(cors());
+
 const books = [
   {
     title: "Swann's Way: In Search of Lost Time",
     author: "Marcel Proust",
     pages: "468",
-    stocked: false,
+    stocked: true,
   },
   {
     title: "Ulysses",
@@ -30,22 +33,11 @@ const books = [
     title: "The Great Gatsby",
     author: "F. Scott Fitzgerald",
     pages: "180",
-    stocked: false,
+    stocked: true,
   },
 ];
 
-const myBooksArr = [
-  {
-    title: "Swann's Way: In Search of Lost Time",
-    author: "Marcel Proust",
-    pages: "468",
-  },
-  {
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    pages: "180",
-  },
-];
+const myBooksArr = [];
 
 const navBar = `
   <nav>
@@ -80,9 +72,14 @@ router.get("/books", function (req, res) {
       book.title
     )}" class="book-about">About this book...</a>`;
     book.stocked
-      ? (booksDiv += `<a href="/books/borrow/${urlify(
+      ? (booksDiv += `<form action="/books/borrow/${urlify(
           book.title
-        )}" class="book-stocked">Borrow this book</a></div>`)
+        )}" method="post">
+      <input type="text" name="title" style="display: none" value="${
+        book.title
+      }">
+      <input type="submit" value="Borrow this book">
+    </form></div>`)
       : (booksDiv += `<button disabled>Unavailable</button></div>`);
   }
   booksDiv += "</div>";
@@ -165,35 +162,40 @@ router.get("/books/:clickedBook", (req, res) => {
   console.log("clickedBook: ", clickedBook);
   console.log("typeof clickedBook: ", typeof clickedBook);
 
-  let bookObj = books.find((book) => urlify(book.title) == clickedBook);
-  console.log(bookObj);
+  let displayedBook = books.find((book) => urlify(book.title) == clickedBook);
+  console.log(displayedBook);
 
   let bookDesc = booksHead + navBar;
   bookDesc += `
     <div class="book-div">
-      <h2>${bookObj.title}</h2>
-      <h3>Written by:<br />${bookObj.author}</h3>
-      <p class="pages">${bookObj.pages}</p>
-    </div>`;
+      <h2>${displayedBook.title}</h2>
+      <h3>Written by:<br />${displayedBook.author}</h3>
+      <p class="pages">${displayedBook.pages} pages</p>
+    </div>
+    <form action="/books/borrow/${clickedBook}" method="post">
+      <input type="text" name="title" style="display: none" value="${displayedBook.title}">
+      <input type="submit" value="Borrow this book">
+    </form>`;
 
   res.send(bookDesc);
 });
-/* 
-router.post("/books/:clickedBook", (req, res) => {
-  console.log("req.params");
-  console.log(req.params);
 
-  let bookDesc = booksHead + navBar;
+router.post("/books/borrow/:clickedBook", (req, res) => {
+  const clickedBook = req.body.title;
 
-  bookDesc += `
-    <div class="book-div">
-      <h2>The clicked book</h2>
-      <h3>Written by:<br />Author of book</h3>
-      <p class="pages">10000 pages</p>
-    </div>`;
+  // Find the book obj with the clickedbook title
+  let bookToBorrow = books.find((book) => book.title == clickedBook);
+  let bookIndex = books.findIndex((book) => book.title == clickedBook);
 
-  res.send(bookDesc);
-}); */
+  // Add book to myBooks array
+  myBooksArr.unshift(bookToBorrow);
+
+  // Change property 'stocked' in books array
+  books[bookIndex].stocked = false;
+
+  // Show all books currently borrowed by user
+  res.redirect("/my-books");
+});
 
 // Helper function
 // Converts title of book to a url acceptable route

@@ -1,14 +1,24 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
     <title>Express</title>
-    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <link rel="stylesheet" href="stylesheets/style.css" type="text/css" />
     <script defer src="javascripts/script.js"></script>
   </head>
 
   <body>
+    <nav>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/books">View our selection!</a></li>
+        <li><a href="/my-books">View your collection!</a></li>
+        <li><a href="/donate">Donate a book!</a></li>
+      </ul>
+    </nav>
     <h1>Express library</h1>
-    <p>Welcome to the library</p>
-    <p>Click <a href="books">here</a> to borrow a book</p>
-    <p>Click <a href="books/add">here</a> to donate a book to the library</p>
+    <h2>Welcome to the library</h2>
+    <p>Here are some books from our selection:</p>
+    <div id="featured-books"></div>
+    <a href="/books">All books -></a>
   </body>
 </html>
