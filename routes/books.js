@@ -37,7 +37,7 @@ const books = [
   },
 ];
 
-const myBooksArr = [];
+let myBooksArr = [];
 
 const navBar = `
   <nav>
@@ -65,12 +65,13 @@ router.get("/books", function (req, res) {
 
   for (book of books) {
     booksDiv += `
+        <div class="book-div-wrapper">
         <div class="book-div">
           <h2>${book.title}</h2>
     `;
     booksDiv += `<a href="/books/${urlify(
       book.title
-    )}" class="book-about">About this book...</a>`;
+    )}" class="book-about">About this book...</a></div>`;
     book.stocked
       ? (booksDiv += `<form action="/books/borrow/${urlify(
           book.title
@@ -84,6 +85,76 @@ router.get("/books", function (req, res) {
   }
   booksDiv += "</div>";
   res.send(booksDiv);
+});
+
+/* GET /my-books */
+/* Shows all books you have currently borrowed from the library */
+router.get("/my-books", (req, res) => {
+  let myBooksPage = booksHead + navBar;
+  console.log(myBooksArr);
+  console.log(books);
+
+  if (!myBooksArr.length) {
+    myBooksPage += "There doesn't seem to be anything here...";
+  } else {
+    myBooksPage += `
+    <h1>Books you've currently checked out</h1>
+    <div class='books-wrapper'>`;
+
+    for (book of myBooksArr) {
+      myBooksPage += `
+      <div class="book-div-wrapper">
+        <div class="book-div">
+          <h2>${book.title}</h2>
+          <h3>Written by:<br />${book.author}</h3>
+          <p class="pages">${book.pages} pages</p>
+        </div>
+        <form action="/books/return/${urlify(book.title)}" method="post">
+          <input type="text" name="title" style="display: none" value="${
+            book.title
+          }">
+        <input type="submit" value="Return this book">
+        </form>
+      </div>`;
+    }
+    myBooksPage += "</div>";
+  }
+  res.send(myBooksPage);
+});
+
+/* POST /books/return/:clickedBook */
+/* Removes the clicked book from myBooks */
+/* Redirects to /books after */
+router.post("/books/return/:clickedBook", (req, res) => {
+  const clickedBook = req.body.title;
+
+  // Find the book obj with the clickedbook title in books array
+  let bookIndexLibrary = books.findIndex((book) => book.title == clickedBook);
+
+  // Find the book obj with the clickedbook title in mybooks array
+  let bookIndexMyBooks = myBooksArr.findIndex(
+    (book) => book.title == clickedBook
+  );
+  console.log("index in my books: ", bookIndexMyBooks);
+  console.log("index in the library: ", bookIndexLibrary);
+
+  // Remove book from myBooks array
+  myBooksArr.splice(bookIndexMyBooks, 1);
+
+  console.log(myBooksArr);
+
+  // Change property 'stocked' in books array
+  books[bookIndexLibrary].stocked = true;
+
+  // Style page
+  let page = booksHead;
+  page += `
+    <p>${clickedBook} has been returned to the library!</p>
+    <p><a href="/books">Back to the library --></a></p>
+    <p><a href="/my-books">See your collection --></a></p>`;
+
+  // Show all books currently borrowed by user
+  res.send(page);
 });
 
 /* GET /donate */
@@ -126,35 +197,6 @@ router.post("/donate", (req, res) => {
   res.redirect("/books");
 });
 
-/* GET /my-books */
-/* Shows all books you have currently borrowed from the library */
-router.get("/my-books", (req, res) => {
-  let myBooksPage = booksHead + navBar;
-
-  if (!myBooksArr.length) {
-    myBooksPage += "There doesn't seem to be anything here...";
-  } else {
-    myBooksPage += `
-    <h1>Books you've currently checked out</h1>
-    <div class='books-wrapper'><ul>`;
-
-    for (book of myBooksArr) {
-      myBooksPage += `
-      <li>
-        <div class="book-div">
-          <h2>${book.title}</h2>
-          <h3>Written by:<br />${book.author}</h3>
-          <p class="pages">${book.pages} pages</p>
-        </div>
-        <button>Return this book</button>
-      </li>`;
-    }
-
-    myBooksPage += "</ul></div>";
-  }
-  res.send(myBooksPage);
-});
-
 /* GET /books/clickedbook */
 /* Shows additional info about a particular book */
 router.get("/books/:clickedBook", (req, res) => {
@@ -167,19 +209,30 @@ router.get("/books/:clickedBook", (req, res) => {
 
   let bookDesc = booksHead + navBar;
   bookDesc += `
-    <div class="book-div">
-      <h2>${displayedBook.title}</h2>
-      <h3>Written by:<br />${displayedBook.author}</h3>
-      <p class="pages">${displayedBook.pages} pages</p>
-    </div>
-    <form action="/books/borrow/${clickedBook}" method="post">
-      <input type="text" name="title" style="display: none" value="${displayedBook.title}">
+    <div class="book-div-wrapper">
+      <div class="book-div">
+        <h2>${displayedBook.title}</h2>
+        <h3>Written by:<br />${displayedBook.author}</h3>
+        <p class="pages">${displayedBook.pages} pages</p>
+      </div>`;
+
+  displayedBook.stocked
+    ? (bookDesc += `<form action="/books/borrow/${urlify(
+        displayedBook.title
+      )}" method="post">
+      <input type="text" name="title" style="display: none" value="${
+        displayedBook.title
+      }">
       <input type="submit" value="Borrow this book">
-    </form>`;
+    </form></div></div>`)
+    : (bookDesc += `<button disabled>Unavailable</button></div></div>`);
 
   res.send(bookDesc);
 });
 
+/* POST /books/borrow/:clickedBook */
+/* Adds the clicked book to myBooks */
+/* Page only contains a confimation and links to the library and your collection*/
 router.post("/books/borrow/:clickedBook", (req, res) => {
   const clickedBook = req.body.title;
 
@@ -193,8 +246,15 @@ router.post("/books/borrow/:clickedBook", (req, res) => {
   // Change property 'stocked' in books array
   books[bookIndex].stocked = false;
 
-  // Show all books currently borrowed by user
-  res.redirect("/my-books");
+  // Style page
+  let page = booksHead;
+  page += `
+    <p>${clickedBook} has been added to your account!</p>
+    <p><a href="/books">Back to the library --></a></p>
+    <p><a href="/my-books">See your collection --></a></p>`;
+
+  // Show a page confirming that the book has been borrowed
+  res.send(page);
 });
 
 // Helper function

@@ -63,6 +63,12 @@ ul {
   position: relative;
 }
 
+.book-div-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .book-div a,
 .book-div form,
 .book-div button {
@@ -75,13 +81,9 @@ ul {
 }
 
 .book-div a.book-about {
-  bottom: 52px;
+  bottom: 0;
   border-radius: 4px;
   background-color: rgb(240, 240, 240);
-}
-
-.book-div a.book-stocked,
-.book-div a.book-about {
   text-decoration: none;
   padding: 2px;
 }
@@ -129,4 +131,8 @@ nav li:hover {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+p {
+  margin-left: 20%;
 }
